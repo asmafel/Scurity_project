@@ -4,6 +4,29 @@ import json
 import string
 import time
 import validators
+import json
+import requests
+
+
+def scan_virustotal(filename):
+    api_url = 'https://www.virustotal.com/vtapi/v2/file/scan'
+    params = dict(apikey='35b5228f63ee297146c67b0b6a3c3a1795833c580c05d1eac3ffea31b7f5487d')
+    with open(filename, 'rb') as file:
+        files = dict(file=(filename, file))
+        response = requests.post(api_url, files=files, params=params)
+    if response.status_code == 200:
+        result=response.json()
+        scan_id = result['scan_id']
+        return scan_id
+
+def get_vt_results(scan_id):
+    api_url = 'https://www.virustotal.com/vtapi/v2/file/report'
+    params = dict(apikey='35b5228f63ee297146c67b0b6a3c3a1795833c580c05d1eac3ffea31b7f5487d', resource=scan_id)
+    response = requests.get(api_url, params=params)
+    if response.status_code == 200:
+        result=response.json()
+        print(json.dumps(result, sort_keys=False, indent=4))
+        return result
 
 def get_strings(filename, min=4):
     with open(filename, errors="ignore") as f:
@@ -100,12 +123,23 @@ print("[*] Functions in export and import :")
 
 time.sleep(1)
 
-malicious_functions = ["CreateFile", "CreateProcess", "InternetOpen"] # Just some few examples.
-
+malicious_functions = ["CreateFile", "CreateProcess", "InternetOpen", "VerQueryValueW"] # Just some few examples.
 
 print(functions)
+
+print("---------------------------------------------------------")
 
 for i in functions:
     if i in malicious_functions:
         print("[-] Alert !!! Possibilité de malware !")
+        print("[+] Send it to Virus total for scan !")
+        scan_id = scan_virustotal(exe_path)
+        print("[+] Scan ID : {0}".format(scan_id))
+        time.sleep(30)
+        print("----------------------Reports ---------------------------")
+        results = get_vt_results(scan_id)
+        if results['scans']['McAfee']['detected'] == False:
+            print("[+] Non, cet executable n'est pas un virus !")
+        else:
+            print("[-] Alert, cet executable est un virus !")
         break
