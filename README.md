@@ -1,2 +1,2 @@
-# Projet de sécurité informatique by FELLAG Asma and Belacel Neila
+# Projet de sécurité informatique by FELLAG Asma
 Titre : Executable Parser and malware checker
